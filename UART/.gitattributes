@@ -1,4 +1,0 @@
-instance/UART/baudrate_gen.vcd filter=lfs diff=lfs merge=lfs -text
-instance/SPI/SPI_Master.vcd filter=lfs diff=lfs merge=lfs -text
-baudrate_gen.vcd filter=lfs diff=lfs merge=lfs -text
-SPI_Master.vcd filter=lfs diff=lfs merge=lfs -text
