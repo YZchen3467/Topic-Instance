@@ -21,6 +21,7 @@ module I2C_Master_PAT( // output
 					// input
 					o_done_flag,
 					o_scl,
+					o_sda_mode,
 					
 					// inout
 					io_sda	
@@ -41,14 +42,10 @@ output reg [7:0] i_write_data;
 // output
 input o_done_flag;
 input o_scl;
+input o_sda_mode;
 
 // inout
-inout io_sda;
-
-//================================================================
-//  integer / genvar / parameters
-//================================================================
-
+inout wire io_sda;
 
 //================================================================
 //  clock
@@ -57,15 +54,21 @@ initial clk = 0 ;
 always #10 clk = ~clk ;
 
 //================================================================
+//  inout processing
+//================================================================
+assign io_sda = (o_sda_mode == 1'b1) ? 1'bz:1'b0; // if sda is input mode => sda_mode == 1'b0,
+                                                  // input the zeor as ack response to master
+
+//================================================================
 //  initial
 //================================================================
 initial begin 
 	force clk = 0;
 	reset_task;
+	i_i2c_en = 1'b1;
 	
-	#(500_000)
+	#(1_000_000);
 	$finish;
-	
 end
 
 //================================================================
