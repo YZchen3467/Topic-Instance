@@ -23,8 +23,8 @@ def generate_data(PATTERN):
 # generate N group 
 devices, data_addresses, write_data = generate_data(PATNUM)
 
-f.write(str(PATNUM) + '\n\n\n')
+f.write(str(PATNUM) + '\n\n')
 for i in range(PATNUM):
-    line = f"{devices[i]} {data_addresses[i]} {write_data[i]}\n\n"
+    line = f"{devices[i]} {data_addresses[i]} {write_data[i]}\n"
     f.write(line)
 

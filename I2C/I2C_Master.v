@@ -26,18 +26,18 @@ module I2C_Master( // input
 //  INPUT AND OUTPUT DECLARATION                         
 //================================================================
 //input 
-input clk;                    // 50MHz sys_clk
-input rst_n;
-
-input i_i2c_en;               // i2c_master enable
-input [6:0] i_device_addr;	  // device address
-input [7:0] i_data_addr;      // data address 
-input [7:0] i_write_data;     // data
-
-// output
-output reg o_done_flag;       // done_flag
-output o_scl;                 // i2c clk
-output reg o_sda_mode;        // sda mode => 1 output signal / 0 input signal  
+input clk;                       // 50MHz sys_clk
+input rst_n;                     
+								 
+input i_i2c_en;                  // i2c_master enable
+input [6:0] i_device_addr;	     // device address
+input [7:0] i_data_addr;         // data address 
+input [7:0] i_write_data;        // data
+								 
+// output                        
+output reg o_done_flag;          // done_flag
+output o_scl;                    // i2c clk
+output reg o_sda_mode;           // sda mode => 1 output signal / 0 input signal
 
 // inout
 inout wire io_sda;
@@ -87,8 +87,8 @@ wire w_scl_neg;                // 1/2 of scl => 1/2 of DIV + 1 sys_cycle = DIV3
 //  SDA output
 //================================================================
 assign io_sda = (o_sda_mode == 1'b1) ? r_sda_reg:1'bz;  // if mode is 1'b1, then output the data (sda_reg)
-												    // Otherwise, do nothing and should be high 
-													// impendence (inout port should be a tristate)
+												        // Otherwise, do nothing and should be high 
+													    // impendence (inout port should be a tristate)
 
 //================================================================
 //  clk divide
@@ -132,7 +132,10 @@ end
 always @(*) begin
 	case(curr_state)
 		IDLE: begin
-			next_state = LOAD_ADDR;
+			if(i_i2c_en == 1)
+				next_state = LOAD_ADDR;
+			else
+				next_state = IDLE;
 			jump_next_state = IDLE;
 		end
 		
@@ -191,7 +194,10 @@ always @(*) begin
 		end
 		
 		DONE: begin
-			next_state = IDLE;
+			if(o_done_flag == 1)
+				next_state = IDLE;
+			else
+				next_state = DONE;
 		end
 		
 		default: next_state = IDLE;
@@ -200,11 +206,11 @@ end
 
 always @(posedge clk or negedge rst_n) begin
 	if(!rst_n)begin
-		o_sda_mode    <= 1'b1;
-		r_sda_reg     <= 1'b1;
-		r_bit_cnt     <= 4'd0;
-		o_done_flag   <= 1'b0;
-		r_ack_flag    <= 1'b0;
+		o_sda_mode          <= 1'b1;
+		r_sda_reg           <= 1'b1;
+		r_bit_cnt           <= 4'd0;
+		o_done_flag         <= 1'b0;
+		r_ack_flag          <= 1'b0;
 	end 
 	else if(i_i2c_en) begin
 		case(curr_state)
@@ -218,7 +224,9 @@ always @(posedge clk or negedge rst_n) begin
 			
 			LOAD_ADDR: begin
 				r_load_data <= {i_device_addr, 1'b0}; // 0 represent that master  
-												    // writes data from slave
+												      // writes data to slave
+													  // 1 represent that master
+													  // reads data from slave
 			end
 			
 			LOAD_DATA_ADDR: begin
@@ -283,11 +291,11 @@ always @(posedge clk or negedge rst_n) begin
 		endcase
 	end
 	else begin
-		o_sda_mode    <= 1'b1;
-		r_sda_reg     <= 1'b1;
-		r_bit_cnt     <= 4'd0;
-		o_done_flag   <= 1'b0;
-		r_ack_flag    <= 1'b0;
+		o_sda_mode          <= 1'b1;
+		r_sda_reg           <= 1'b1;
+		r_bit_cnt           <= 4'd0;
+		o_done_flag         <= 1'b0;
+		r_ack_flag          <= 1'b0;
 	end
 end
 
