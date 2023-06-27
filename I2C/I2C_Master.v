@@ -195,7 +195,7 @@ always @(*) begin
 		end
 		
 		DONE: begin
-			if(o_done_flag == 1)
+			if(o_done_flag == 1'b0)
 				next_state = IDLE;
 			else
 				next_state = DONE;
