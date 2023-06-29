@@ -30,7 +30,7 @@ module I2C_Master_PAT( // output
 //================================================================
 //  INPUT AND OUTPUT DECLARATION                         
 //================================================================
-//input 
+// output 
 output reg clk;
 output reg rst_n;
 
@@ -39,7 +39,7 @@ output reg [6:0] i_device_addr;
 output reg [7:0] i_data_addr;
 output reg [7:0] i_write_data;
 
-// output
+// input
 input o_done_flag;
 input o_scl;
 input o_sda_mode;

@@ -18,6 +18,7 @@ module I2C_Master_recive(
 			   o_done_flag,
 			   o_scl,
 			   o_sda_mode,
+			   o_slave_state,	//*** just for simulation ***//
 			   
 			   // inout
 			   io_sda
@@ -29,7 +30,7 @@ module I2C_Master_recive(
 input clk;                       // 50MHz sys_clk
 input rst_n;                     
 								 
-input i_i2c_recv_en;                  // i2c_master enable
+input i_i2c_recv_en;             // i2c_master enable
 input [6:0] i_device_addr;	     // device address
 input [7:0] i_data_addr;         // data address 
 								 
@@ -38,6 +39,8 @@ output reg [7:0] o_read_data;    // recived data
 output reg o_done_flag;          // done_flag
 output o_scl;                    // i2c clk
 output reg o_sda_mode;           // sda mode => 1 output signal / 0 input signal
+output reg [1:0] o_slave_state;	 // ack state check, 1 -> ack state, 2 -> readbyte,
+								 // 0 -> normal status ||| just for simulation
 
 // inout
 inout wire io_sda;
@@ -77,6 +80,7 @@ reg r_sda_reg;	               // sda register
 reg [7:0] r_load_data;         // source data, device addr, data addr
 reg [7:0] r_read_data;
 reg [3:0] r_bit_cnt;           // sending data bit number counter
+reg r_scl_high_mid;            // eliminate meta stable
 reg r_ack_flag;                // ack flag for master write_data to slave
 reg r_nack_flag;               // nack flag for master read_data from slave
 
@@ -116,6 +120,21 @@ assign w_scl_low_mid  = (r_scl_cnt == C_DIV_SELECT2) ? 1'b1:1'b0;  // 3/4 of sel
 assign w_scl_high_mid = (r_scl_cnt == C_DIV_SELECT0) ? 1'b1:1'b0;  // 1/4 of sel
 assign w_scl_neg      = (r_scl_cnt == C_DIV_SELECT3) ? 1'b1:1'b0;  // 1/2 of sel + 1 sys cycle
 				                                                   // For marking scl negedge location 
+
+//================================================================
+//  eliminate metastable in BYTE_READING
+//================================================================
+always @(posedge clk or negedge rst_n) begin
+	if(!rst_n)begin
+		r_scl_high_mid <= 1'b0;
+	end
+	else if(curr_state == 4'd9) begin
+		if(w_scl_high_mid && r_bit_cnt == 4'd7)
+			r_scl_high_mid <= 1'b1;
+	end
+	else
+		r_scl_high_mid <= 1'b0;
+end
 
 //================================================================
 //  SDA 
@@ -205,7 +224,7 @@ always @(*) begin
 		end
 		
 		BYTE_READ: begin
-			if(w_scl_low_mid) begin
+			if(r_scl_high_mid) begin // delay the scl_high_mid in here to make sure reading state have completed
 				if(r_bit_cnt == 4'd7)
 					next_state = NACK;
 				else
@@ -228,7 +247,7 @@ always @(*) begin
 		end
 		
 		STOP_BIT: begin
-			if(w_scl_high_mid)
+			if(w_scl_high_mid) // this part need to add delay for eliminate meta stable
 				next_state = DONE;
 			else
 				next_state = STOP_BIT;
@@ -248,25 +267,26 @@ end
 // datapath
 always @(posedge clk or negedge rst_n) begin
 	if(!rst_n) begin
-		o_sda_mode  <= 1'b1;		// read mode
-		o_done_flag <= 1'b0;
-		o_read_data <= 8'd0;
-		r_sda_reg  	<= 1'b1;
-		r_bit_cnt  	<= 4'd0;
-		r_read_data <= 8'd0;
-		r_ack_flag  <= 1'b0;
+		o_sda_mode      <= 1'b1;		// read mode
+		o_done_flag     <= 1'b0;
+		o_read_data     <= 8'd0;
+		o_slave_state   <= 2'b00;		// for simulation
+		r_sda_reg  	    <= 1'b1;
+		r_bit_cnt  	    <= 4'd0;
+		r_read_data     <= 8'd0;
+		r_ack_flag      <= 1'b0;
 	end
 	
 	else if(i_i2c_recv_en) begin
 		case(curr_state)
 			IDLE: begin
-				o_sda_mode  <= 1'b1;		// output mode
-				o_done_flag <= 1'b0;
-				r_sda_reg   <= 1'b0; 	    // when ready for sending BYTE
-							 			    // sda need to keep high
-				r_scl_en    <= 1'b0;
-				r_bit_cnt   <= 4'd0;
-				r_read_data <= 8'd0;
+				o_sda_mode      <= 1'b1;		// output mode
+				o_done_flag     <= 1'b0;
+				r_sda_reg       <= 1'b1; 	    // when ready for sending BYTE
+							     			    // sda need to keep high
+				r_scl_en        <= 1'b0;
+				r_bit_cnt       <= 4'd0;
+				r_read_data     <= 8'd0;
 			end
 			
 			LOAD_SEND_ADDR: begin
@@ -301,17 +321,25 @@ always @(posedge clk or negedge rst_n) begin
 				r_sda_reg  <= 1'b0;
 				r_scl_en   <= 1'b1;
 				o_sda_mode <= 1'b0;		// input mode, slave input signal to Master until
-										// o_sda_mode <= 1'b1 again.										
-				if(w_scl_high_mid) 
-					r_ack_flag <= io_sda;
+										// o_sda_mode <= 1'b1 again.
+				o_slave_state <= 2'b01;
+				if(w_scl_high_mid)
+					r_ack_flag    <= io_sda;
 			end
 			
 			ACK_PARITY: begin
-				r_scl_en   <= 1'b1;
-				if(r_ack_flag == 1'b0) begin // if ack_parity have be passed
-					if(w_scl_neg) begin 
-						o_sda_mode <= 1'b1;
-						r_sda_reg  <= 1'b1;  // let sda into stand by stauts
+				r_scl_en      <= 1'b1;
+				// o_slave_state <= 2'b00; 	  // when after ack state, then close the ack_state enable
+				if(r_ack_flag == 1'b0) begin  // if ack_parity have be passed
+					if(w_scl_neg) begin
+						if(next_state == BYTE_READ) begin
+							o_sda_mode <= 1'b0;
+							r_sda_reg  <= 1'b1;
+						end
+						else begin	
+							o_sda_mode <= 1'b1;
+							r_sda_reg  <= 1'b1;  // let sda into stand by stauts
+						end
 					end
 				end	
 			end
@@ -330,14 +358,16 @@ always @(posedge clk or negedge rst_n) begin
 			BYTE_READ: begin 
 				r_scl_en   <= 1'b1;
 				o_sda_mode <= 1'b0;
+				o_slave_state <= 2'b10;
 				if(w_scl_high_mid) begin
-					if(r_bit_cnt == 4'd7) begin 
-						r_bit_cnt   <= 4'd0;
-						o_read_data <= {r_read_data[6:0], io_sda};						
+					if(r_bit_cnt == 4'd7) begin
+						o_slave_state   <= 2'b00;
+						r_bit_cnt       <= 4'd0;
+						o_read_data     <= {r_read_data[6:0], io_sda};						
 					end
-					else begin 
-						r_read_data <= {r_read_data[6:0], io_sda};
-						r_bit_cnt	<= r_bit_cnt + 1'b1;
+					else begin
+						r_read_data     <= {r_read_data[6:0], io_sda};
+						r_bit_cnt       <= r_bit_cnt + 1'b1;
 					end
 				end
 			end
@@ -375,13 +405,14 @@ always @(posedge clk or negedge rst_n) begin
 	end
 	
 	else begin 
-		o_sda_mode  <= 1'b1;
-		o_done_flag <= 1'b0;
-		o_read_data <= 8'd0;
-		r_sda_reg  	<= 1'b1;
-		r_bit_cnt  	<= 4'd0;
-		r_read_data <= 8'd0;
-		r_ack_flag  <= 1'b0;
+		o_sda_mode      <= 1'b1;		// read mode
+		o_done_flag     <= 1'b0;
+		o_read_data     <= 8'd0;
+		o_slave_state   <= 2'b00;		// for simulation
+		r_sda_reg  	    <= 1'b1;
+		r_bit_cnt  	    <= 4'd0;
+		r_read_data     <= 8'd0;
+		r_ack_flag      <= 1'b0;
 	end
 	
 end

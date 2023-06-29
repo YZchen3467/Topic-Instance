@@ -17,7 +17,6 @@ module I2C_Master_TB();
 wire clk;
 wire rst_n;
 
-
 // I2C Master
 wire i_i2c_en;
 wire io_sda;
