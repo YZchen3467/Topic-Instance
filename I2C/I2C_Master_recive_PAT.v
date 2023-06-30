@@ -53,6 +53,8 @@ inout wire io_sda;
 //================================================================
 reg r_io_sda;
 reg [7:0] r_data;
+reg r_io_sda_delay;
+reg [2:0] bit_index;
 
 //================================================================
 //  parameters & integer
@@ -70,21 +72,8 @@ always #10 clk = ~clk ;
 //================================================================
 //  inout processing
 //================================================================
-always @(negedge clk) begin
-	if(o_sda_mode == 1'b0) begin
-		case (o_slave_state)
-			2'b00: r_io_sda <= 1'b0;  	// default sda_out from slave to master set to 0 
-			2'b01: r_io_sda <= 1'b0;  	// Output 0 for ACK state
-			2'b10: begin
-				r_io_sda <= ~r_io_sda;
-				repeat(495) @(negedge clk);
-			end
-			default: r_io_sda <= 1'b0;        // Default case, set to 0
-		endcase
-	end
-end
 
-assign io_sda = (o_sda_mode == 1'b1) ? 1'bz:r_io_sda;			
+assign io_sda = (o_sda_mode == 1'b1) ? 1'bz:(o_slave_state == 2'b01 ? 1'b0:r_io_sda );		
 			
 //================================================================
 //  initial
@@ -98,8 +87,6 @@ initial begin
 	reset_task;
 	i_i2c_recv_en = 0;
 	r_io_sda = 1'b0;
-	r_data = 8'b0000_0000;
-	
 	
 	// write_in
 	@(negedge clk);
@@ -128,26 +115,38 @@ end endtask
 //================================================================
 task write_in_task; begin
 	i_i2c_recv_en = 1;
+	bit_index = 0;
 	write_in = $fscanf(pat_file, "%h %h %h\n", i_device_addr, i_data_addr, r_data);
 	while (o_done_flag != 1) begin
         @(negedge clk);
+		if (i_i2c_recv_en && o_slave_state == 2'b10 && o_scl == 1'b0) begin
+			if (bit_index == 0)
+				r_io_sda <= r_data[7];
+			else if (bit_index == 1)
+				r_io_sda <= r_data[6];
+			else if (bit_index == 2)
+				r_io_sda <= r_data[5];
+			else if (bit_index == 3)
+				r_io_sda <= r_data[4];
+			else if (bit_index == 4)
+				r_io_sda <= r_data[3];
+			else if (bit_index == 5)
+				r_io_sda <= r_data[2];
+			else if (bit_index == 6)
+				r_io_sda <= r_data[1];
+			else if (bit_index == 7)
+				r_io_sda <= r_data[0];
+			
+			repeat(250) @(negedge clk);
+			bit_index = bit_index + 1'b1;
+			if (bit_index > 7) begin
+				bit_index = 3'd0;
+			end
+		end
     end
     i_i2c_recv_en = 0;
 	repeat(1000) @(negedge clk);
+	
 end endtask
-
-//================================================================
-//  data_task       
-//================================================================
-/*task data_task; begin
-	if(o_slave_state == 2'b10)begin
-		if(o_scl == 1'b0)begin
-			for(i=0; i<8; i=i+1)begin
-				r_io_sda <= r_data[8-i];
-				repeat(500) @(negedge clk);
-			end
-		end
-	end	
-end endtask*/
 
 endmodule

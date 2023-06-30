@@ -270,7 +270,7 @@ always @(posedge clk or negedge rst_n) begin
 		o_sda_mode      <= 1'b1;		// read mode
 		o_done_flag     <= 1'b0;
 		o_read_data     <= 8'd0;
-		o_slave_state   <= 2'b00;		// for simulation
+		o_slave_state   <= 2'b01;		// for simulation
 		r_sda_reg  	    <= 1'b1;
 		r_bit_cnt  	    <= 4'd0;
 		r_read_data     <= 8'd0;
@@ -329,7 +329,6 @@ always @(posedge clk or negedge rst_n) begin
 			
 			ACK_PARITY: begin
 				r_scl_en      <= 1'b1;
-				// o_slave_state <= 2'b00; 	  // when after ack state, then close the ack_state enable
 				if(r_ack_flag == 1'b0) begin  // if ack_parity have be passed
 					if(w_scl_neg) begin
 						if(next_state == BYTE_READ) begin
@@ -361,7 +360,7 @@ always @(posedge clk or negedge rst_n) begin
 				o_slave_state <= 2'b10;
 				if(w_scl_high_mid) begin
 					if(r_bit_cnt == 4'd7) begin
-						o_slave_state   <= 2'b00;
+						o_slave_state   <= 2'b01;
 						r_bit_cnt       <= 4'd0;
 						o_read_data     <= {r_read_data[6:0], io_sda};						
 					end
@@ -408,7 +407,7 @@ always @(posedge clk or negedge rst_n) begin
 		o_sda_mode      <= 1'b1;		// read mode
 		o_done_flag     <= 1'b0;
 		o_read_data     <= 8'd0;
-		o_slave_state   <= 2'b00;		// for simulation
+		o_slave_state   <= 2'b01;		// for simulation
 		r_sda_reg  	    <= 1'b1;
 		r_bit_cnt  	    <= 4'd0;
 		r_read_data     <= 8'd0;
