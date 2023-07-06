@@ -111,7 +111,7 @@ task reset_task; begin
 end endtask
 
 //================================================================
-//  device_addr_task       
+//  write_in_task      
 //================================================================
 task write_in_task; begin
 	i_i2c_recv_en = 1;

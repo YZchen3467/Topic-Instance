@@ -93,7 +93,7 @@ reg [3:0] jump_next_state;     // state transfer with bit
 
 
 wire w_scl_low_mid;            // 3/4 of scl => 3/4 of DIV = DIV2
-wire w_scl_high_mid;		   // 1/4 of scl => 1/4 of DIV = DIV0
+wire w_scl_high_mid;		       // 1/4 of scl => 1/4 of DIV = DIV0
 wire w_scl_neg;                // 1/2 of scl => 1/2 of DIV + 1 sys_cycle = DIV3
 
 //================================================================
@@ -280,10 +280,10 @@ always @(posedge clk or negedge rst_n) begin
 	else if(i_i2c_recv_en) begin
 		case(curr_state)
 			IDLE: begin
-				o_sda_mode      <= 1'b1;		// output mode
+				o_sda_mode      <= 1'b1;	  // output mode
 				o_done_flag     <= 1'b0;
-				r_sda_reg       <= 1'b1; 	    // when ready for sending BYTE
-							     			    // sda need to keep high
+				r_sda_reg       <= 1'b1; 	  // when ready for sending BYTE
+							     			  // sda need to keep high
 				r_scl_en        <= 1'b0;
 				r_bit_cnt       <= 4'd0;
 				r_read_data     <= 8'd0;
@@ -337,7 +337,7 @@ always @(posedge clk or negedge rst_n) begin
 						end
 						else begin	
 							o_sda_mode <= 1'b1;
-							r_sda_reg  <= 1'b1;  // let sda into stand by stauts
+							r_sda_reg  <= 1'b1;    // let sda into stand by stauts
 						end
 					end
 				end	

@@ -1,7 +1,7 @@
 import random
 
 PATNUM = 5
-f = open("C:/myStudy/Topic Instance/I2C/pattern_gen.txt", "w")
+f = open("C:/myStudy/Topic Instance/SPI/pattern_gen.txt", "w")
 
 
 def generate_data(PATTERN):
@@ -10,7 +10,7 @@ def generate_data(PATTERN):
     write_data = []
     
     for _ in range(PATNUM):
-        device = '{:02x}'.format(random.randint(0, 127))        # device_addr
+        device = '{:02x}'.format(random.randint(0, 255))        # device_addr
         data_address = '{:02x}'.format(random.randint(0, 255))  # data_addr
         data = '{:02x}'.format(random.randint(0, 255))          # write_data
         
