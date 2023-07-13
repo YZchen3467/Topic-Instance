@@ -1,6 +1,6 @@
 import random as rd
 
-PATNUM = 10
+PATNUM = 10000
 f = open("C:/myStudy/Topic Instance/SPI/pattern.txt", "w")
 
 randome_pats = []
@@ -11,4 +11,4 @@ for i in range(PATNUM):
 f.write(str(PATNUM))
 for number in randome_pats:
     f.write("\n\n")
-    f.write(number + '\n')
+    f.write(number)

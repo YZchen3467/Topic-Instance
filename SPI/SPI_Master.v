@@ -6,7 +6,7 @@
 //############################################################################
 
 module SPI_Master(// INPUT
-					sclk, 
+					clk, 
 					rst_n,
 					sclk_divider,
 					wr_en,
@@ -29,7 +29,7 @@ module SPI_Master(// INPUT
 //  INPUT AND OUTPUT DECLARATION                         
 //================================================================
 // INPUT
-input sclk; 				// System clk
+input clk; 					// System clk
 input rst_n; 				// System reset, active low
 input [7:0] sclk_divider; 	// SPI clk control / divid
 input wr_en;				// Write enable
@@ -58,15 +58,15 @@ reg r_rd_en;				// Read enable
 reg r_wr_finish;			// Write finish
 reg r_rd_finish;			// Read finish
 /*reg [7:0] r_start_addr;		 Write / Read start address*/
-/*reg [7:0] r_state_init;		 slaver state initial*/
+/*reg [7:0] r_state_init;		 slaver state initial      */
 reg [1:0] r_wr_mode;		// Wrie / Read mode => 2'b01: Write / 2'b10: Read
 
 // RX
 reg [7:0] r_rx_rd_data;		// RX read Data
 
 // SPI interface
-reg r_sclk;					
-reg r_sclk_d0;				// SPI clk
+reg r_sclk;					// SPI clk 
+reg r_sclk_d0;				// SPI clk for eliminate meta_stable
 reg r_csn;					// SPI chip sel
 reg [3:0] r_csn_cnt;		// SPI chip sel count
 reg r_sclk_enable;			// SPI clk enable
@@ -98,7 +98,7 @@ localparam FINISH 	     = 3'd06;		// finish state
 //  input control / status
 //================================================================
 // read / write start
-always @(posedge sclk) begin
+always @(posedge clk) begin
 	if(!rst_n) begin
 		r_wr_en <= 1'b0;
 		r_rd_en <= 1'b0;
@@ -110,7 +110,7 @@ always @(posedge sclk) begin
 end
 
 // Wrie / Read mode => 1'b0: Write / 1;b1: Read
-always @(posedge sclk) begin
+always @(posedge clk) begin
 	if(!rst_n) begin
 		r_wr_mode <= 2'b00;
 	end
@@ -137,7 +137,7 @@ end*/
 //================================================================
 //  Generate SPI clk
 //================================================================
-always @(posedge sclk) begin
+always @(posedge clk) begin
 	if(!rst_n) 						
 		r_sclk_enable <= 1'b0;
 	else if(curr_state == IDLE) 	
@@ -147,7 +147,7 @@ always @(posedge sclk) begin
 end
 
 // SPI clk divider
-always @(posedge sclk) begin
+always @(posedge clk) begin
 	if(!rst_n)
 		r_sclk_divider <= 8'h0;
 	else if(r_sclk_enable) begin
@@ -160,7 +160,7 @@ always @(posedge sclk) begin
 		r_sclk_divider <= 8'h0;
 end
 
-always @(posedge sclk) begin
+always @(posedge clk) begin
 	if(!rst_n)
 		r_sclk <= 1'b0;
 	else if(r_sclk_enable) begin
@@ -171,7 +171,7 @@ always @(posedge sclk) begin
 		r_sclk <= 1'b0;
 end
 
-always @(posedge sclk) begin
+always @(posedge clk) begin
 	if(!rst_n)
 		r_sclk_d0 <= 1'b0;
 	else
@@ -184,7 +184,7 @@ assign sclk_nedge = r_sclk_d0 & (~r_sclk); // SPI clk negative edge
 //================================================================
 //  SPI chip sel
 //================================================================
-always @(posedge sclk) begin
+always @(posedge clk) begin
 	if(!rst_n)
 		r_csn <= 1'b1;
 	else if(curr_state == CSN_DISABLE)
@@ -196,7 +196,7 @@ end
 //================================================================
 //  FSM
 //================================================================
-always @(posedge sclk) begin
+always @(posedge clk) begin
 	if(!rst_n)
 		curr_state <= IDLE;
 	else
@@ -281,7 +281,7 @@ always @(*) begin
 	endcase
 end
 
-always @(posedge sclk) begin
+always @(posedge clk) begin
 	if(!rst_n)begin
 		r_spi_addr_cnt  <= 8'h0;
 		r_wr_data 		<= 8'h0;
@@ -379,7 +379,7 @@ assign rx_rd_data = (r_spi_addr_cnt[2:0] == 3'h1) ? r_rx_rd_data : 8'h0;
 //================================================================
 //  SPI finish
 //================================================================
-always @(posedge sclk) begin
+always @(posedge clk) begin
 	if(!rst_n) begin
 		r_wr_finish <= 1'b0;
 		r_rd_finish <= 1'b0;
@@ -397,7 +397,7 @@ assign rd_finish = r_rd_finish;
 //  SPI OUTPUT
 //================================================================
 assign SPI_SCLK = r_sclk;
-assign SPI_CSN = r_csn;
+assign SPI_CSN 	= r_csn;
 assign SPI_MOSI = !r_csn ? r_wr_data[7] : 1'b0;
 
 endmodule 

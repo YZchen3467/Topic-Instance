@@ -10,7 +10,7 @@
 `endif
 
 module SPI_Master_PATTERN(// OUTPUT
-					sclk, 
+					clk, 
 					rst_n,
 					sclk_divider,
 					wr_en,
@@ -32,7 +32,7 @@ module SPI_Master_PATTERN(// OUTPUT
 //================================================================
 //  INPUT AND OUTPUT DECLARATION                         
 //================================================================
-output reg sclk; 				// System clk
+output reg clk; 				// System clk
 output reg rst_n; 				// System reset, active low
 output reg [7:0] sclk_divider; 	// SPI clk control / divid
 output reg wr_en;				// Write enable
@@ -60,8 +60,8 @@ integer pat_file, a;
 //================================================================
 //  clock
 //================================================================
-initial sclk = 0 ;
-always #50 sclk = ~sclk ;
+initial clk = 0 ;
+always #50 clk = ~clk;
 
 //================================================================
 //  INITIAL                         
@@ -70,7 +70,7 @@ initial begin
 	pat_file = $fopen("pattern.txt", "r");
 	a = $fscanf(pat_file, "%d\n", PATNUM);
 	
-	sclk 		 = 1'b0;
+	clk 		 = 1'b0;
 	SPI_MISO 	 = 1'b0;
 	rd_en 		 = 1'b0;
 	wr_en 	 	 = 1'b0;
@@ -82,7 +82,7 @@ initial begin
 	#100 
 	rst_n 		 = 1'b1;
 	
-	@(negedge sclk);
+	@(negedge clk);
 	for(patcount=0; patcount < PATNUM; patcount = patcount + 1) begin
 		write_data;
 		read_data;
@@ -117,7 +117,7 @@ task write_data; begin
 	#100 wr_en = 1'b0;
 	sclk_divider = 8'h1;
 	a = $fscanf(pat_file, "%h", tx_wr_data);
-	repeat(7'd64) @(negedge sclk); // each data delay bits
+	repeat(7'd64) @(negedge clk); // each data delay bits
 end endtask
 
 //================================================================
@@ -128,7 +128,7 @@ task read_data; begin
 	wr_en = 1'b0;
 	#100 rd_en = 1'b0;
 	sclk_divider = 8'h1;
-	repeat(7'd64) @(negedge sclk);
+	repeat(7'd64) @(negedge clk);
 end endtask
 
 //================================================================
