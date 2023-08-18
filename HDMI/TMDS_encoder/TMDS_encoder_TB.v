@@ -52,7 +52,6 @@ initial begin
 end
 
 initial begin
-    // Initialize inputs
 	// initial setting
 	force clk = 0;
 	i_din = 8'b0;
