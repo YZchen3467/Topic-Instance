@@ -1,4 +1,4 @@
-module DDIO_OUT #(parameter WIDTH = 8)
+module DDIO_OUT #( parameter WIDTH = 8)
 (
     datain_h,				// posedge data
     datain_l,				// negedge data
@@ -98,6 +98,7 @@ end
 //================================================================
 //  To satisfy negedge output data, that need to delay 1 clk time
 //================================================================
+/* JUST FOR THIS SIMULATION */
 always @(negedge clk) begin
 	datain_l_r1 <= datain_l;
 	datain_l_r2 <= datain_l_r1;	
