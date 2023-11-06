@@ -72,7 +72,7 @@ initial begin
 		if(patcount < PATNUM)
 			$display(patcount + 1);
 	end
-	#(100_000)
+	#(1_150_220)
 	$finish;
 	
 end

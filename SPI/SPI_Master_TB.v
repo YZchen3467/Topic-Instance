@@ -14,7 +14,7 @@
 module SPI_Master_TB;
 
 // INPUT
-wire sclk; 					// System clk
+wire clk; 					// System clk
 wire rst_n; 				// System reset, active low
 wire [7:0] sclk_divider; 	// SPI clk control / divid
 wire wr_en;					// Write enable
@@ -40,7 +40,7 @@ initial begin
 end
 
 SPI_Master u_SPI_Master(
-	.sclk        (sclk        ),    // System Clock.
+	.clk         (clk         ),    // System Clock.
     .rst_n       (rst_n       ),    // System Reset. Low Active 
     .sclk_divider(sclk_divider),    // SPI Clock Control / Divid
     .wr_en    	 (wr_en       ),    // Write  enable 
@@ -61,7 +61,7 @@ SPI_Master u_SPI_Master(
 );
 
 SPI_Master_PATTERN u_SPI_Master_PAEETRN(
-	.sclk        (sclk        ),    // System Clock.
+	.clk         (clk         ),    // System Clock.
     .rst_n       (rst_n       ),    // System Reset. Low Active 
     .sclk_divider(sclk_divider),    // SPI Clock Control / Divid
     .wr_en    	 (wr_en       ),    // Write  enable 
